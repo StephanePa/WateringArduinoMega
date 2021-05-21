@@ -187,7 +187,7 @@ class spt_application
     //---------------------------------------------------------------
     static int SetWateringTimer_Command();
     //---------------------------------------------------------------
-	static int GetWateringTimer_Command();
+	  static int GetWateringTimer_Command();
     //---------------------------------------------------------------
     static int SetFlowerPotWateringEnable_Command();
     //---------------------------------------------------------------

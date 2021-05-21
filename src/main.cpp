@@ -73,9 +73,7 @@ void setup()
   
   Serial.begin(115200);
   // initialize serial for ESP module
-  Serial2.begin(115200);
-  // initialize ESP module
-  //WiFi.init(&Serial2);
+  MQTTSerial.begin(115200);
 
   // Initialisation SD Card
   // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
@@ -85,112 +83,44 @@ void setup()
   pinMode(SD_SS_CS_Pin, OUTPUT);
   if (SD.begin(SD_SS_CS_Pin))
   {
-#ifdef _SERIAL_VERSION_
-Serial.println("SD Begin -> OK");
-#endif
     Data.LoadConfiguration();
-  }
-  else
-  {
-#ifdef _SERIAL_VERSION_
-Serial.println("SD Begin -> ERROR !");
-#endif
   }
   // Init Application
   Data.Init(/*&client*/);
   Application.Init(&Data/*,&client*/);
- 
 
-  // check for the presence of the shield
-  /*if (WiFi.status() == WL_NO_SHIELD) 
-  {
-    Serial.println("WiFi shield not present");
-    // don't continue
-    while (true);
-  }*/
-
-  // attempt to connect to WiFi network
-  /*
-  while ( status != WL_CONNECTED) 
-  {
-    Serial.print("Attempting to connect to WPA SSID: ");
-    //Serial.println(ssid);
-    Serial.println(SSID);
-    // Connect to WPA/WPA2 network
-    status = WiFi.begin(SSID, PASSWORD);
-   }
-
-   // you're connected now, so print out the data
-   Serial.println("You're connected to the network");
-
-   //connect to MQTT server
-   client.setServer(server, 1883);
-   client.setCallback(callback);
-   */
-   Application.SetState(ProgramState_WaitingForCommand);
-   digitalWrite(BusyLedPin, LOW);
+  Application.SetState(ProgramState_WaitingForCommand);
+  digitalWrite(BusyLedPin, LOW);
 }
 
-//print any message received for subscribed topic
-
-
-void loop() {
-bool bool_debug;
-// put your main code here, to run repeatedly:
-/*
-if (!client.connected()) {
-reconnect();
-}
-*/
-//client.loop();
-delay(200);
-
-if (Serial2.available())
+void loop() 
 {
+  bool bool_debug;
+  bool ok;
+  delay(200);
+
+  if (MQTTSerial.available())
+  {
     String str;
-    str = Serial2.readString();
-Serial.print("---> string received (");
-Serial.print(str.length());
-Serial.print("):");
-Serial.println(str);
-
-for (int ii=0;ii<str.length();ii++)
-{
-  Serial.print("..(");
-  Serial.print(ii);
-  Serial.print(") : ");
-  Serial.println((int)str.c_str()[ii]);
-}
+    str = MQTTSerial.readString();
     StaticJsonDocument<200> doc;
     DeserializationError error = deserializeJson(doc, str.c_str());
     // Test if parsing succeeds.
-        if (error)
-        {
-            Serial.println(F("   > Json parse error"));
-            return;
-        }
-        else
-        {
-            /*int function = doc["f"];
-            strncpy(buff, (char*)payload, length);
-            buff[length] = 0x00;
-            String str2(buff);
-            // Print values.
-            Serial.print("   > function n°"); Serial.println(function);
-            Serial.print("   > code : "); Serial.println(value);
-            Serial.print("> launch code Application.Command(str) str="); Serial.println(str2);*/
-            Application.Command(str); // return boolean !!!
-        }
-    /*char receivedChar = (char)payload[i];
-    Serial.print(receivedChar);
-    if (receivedChar == '0') Serial.println("Off");
-    if (receivedChar == '1') Serial.println("On");
-    */
-    //}
-    Serial.println();
-    //client.publish(MQTT_PublishTopic, "{\"ack\":\"ok\",\"func\":0}");
-    Serial2.println("[ack]ok");
-}
+    if (error)
+    {
+      ok=false;
+      return;
+    }
+    else
+    {
+      ok=Application.Command(str); // return boolean !!!
+    }
+    String str_topic;
+    String str_payload;
+    str_topic = String("ack");
+    str_payload = String(ok);
+    MQTTSerial.println("[" + str_topic + "]" + str_payload);
+  }
 
 //#ifdef _SERIAL_VERSION_
 //Serial.print(F("LOOP Application State = "));

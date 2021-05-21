@@ -52,9 +52,12 @@ struct File_DataConfig
   OneWire_DS18S20_Sensor_DataConfig DS18S20[5];
   int SensorTimerValue;
   int SoilSensorTimerValue;
+  void _loadInternalConfigFile(File& OrigFile);
+  void _saveInternalConfigFile(File& DestFile);
+  void _loadExternalConfigFile(File& OrigFile);
+  void _saveExternalConfigFile(File& DestFile);
   void _loadConfigFile(File& OrigFile);
   void _saveConfigFile(File& DestFile);
-  void _copyConfigFile();
   char buffer[200];
   char *buf;
   char key[100];
@@ -129,11 +132,19 @@ class spt_data
   protected:
     //spt_tcpserver *wifiPtr;
     //PubSubClient *MQTT_Client;
+    char InternalConfigFilename[30];
+    char InternalConfigBackupFilename[30];
+    char ExternalConfigFilename[30];
+    char ExternalConfigBackupFilename[30];
     char ConfigFilename[30];
     char ConfigBackupFilename[30];
+    void _loadInternalConfigFile();
+    void _saveInternalConfigFile();
+    void _loadExternalConfigFile();
+    void _saveExternalConfigFile();
     void _loadConfigFile();
     void _saveConfigFile();
-    void _copyConfigFile();
+    void _copyConfigFile(char *sourceFile,char *destinationFile);
     File_DataConfig Config;
   char buffer[200];
   char *buf;

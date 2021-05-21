@@ -147,6 +147,7 @@ String spt_application::GetStateString(int state)
     case ProgramState_WaitingForCommand : return String(F("ProgramState_WaitingForCommand"));
     case ProgramState_AutomaticWatering : return String(F("ProgramState_AutomaticWatering"));
   }
+  return String(F("ProgramState_Unknownd"));
 }
 
 //-----------------------------------------------------------------------------
@@ -239,6 +240,8 @@ void spt_application::SetState(int state, bool senddata)
 boolean spt_application::Command(String str_command)
 {
   String str;
+  bool ok;
+  ok=false;
   //int functionID
   // Deserialize the JSON document
   #ifdef JSONVERSION5 
@@ -291,12 +294,13 @@ Serial.println(F("spt_application::Command: CommandFunction_CommandKO"));
       str+="}";
       //MQTT_Client->publish(MQTT_PublishTopic,str.c_str());
       MQTTSerial.println("[ack]" + str);
+      ok=true;
 #ifdef _SERIAL_VERSION_
 Serial.println(F("spt_application::Command: CommandFunction_CommandOK"));
 #endif
     }
   }
-  return true;
+  return ok;
 }
 //-----------------------------------------------------------------------------
 
@@ -360,7 +364,7 @@ Serial.println(F("  LaunchWateringFlowerPot_Command-> StopWateringFlowerPot"));
 //-----------------------------------------------------------------------------
 int spt_application::LaunchManualPump_Command()
 {
-  bool enable;
+  //bool enable;
   CommandStatus=CommandFunction_CommandOK;
   if ( (State!=ProgramState_WaitingForCommand) && (State!=ProgramState_ManualPump) ) return (CommandStatus=CommandFunction_CommandKO);
   if (FunctionID!=7) return (CommandStatus=CommandFunction_CommandKO);
@@ -411,7 +415,7 @@ int spt_application::GetManualPumpTimer_Command()
 int spt_application::SetManualPumpTimer_Command()
 {
   unsigned int TimerValue;
-  unsigned long timerValue;
+  //unsigned long timerValue;
   String str_topic;
   String str;
   CommandStatus=CommandFunction_CommandOK;
@@ -495,17 +499,18 @@ int spt_application::SetWateringTimer_Command()
 	TimerValue = JsonCmd["v"];
 	if (TimerValue == 0) return (CommandStatus = CommandFunction_CommandKO);
 	dataPtr->FlowerPotWateringTimerValue[pot-1] = TimerValue;
-    dataPtr->FlowerPotWateringTimer[pot - 1].SetTimerValue(TimerValue);
-    dataPtr->SaveConfiguration();
-    str_topic = String("f2p") + String(pot);
-    str = String(dataPtr->FlowerPotWateringTimer[pot - 1].GetTimerValue());
-    MQTTSerial.println("[" + str_topic + "]" + str);
-    /*if (MQTT_Client != NULL)
+  dataPtr->FlowerPotWateringTimer[pot - 1].SetTimerValue(TimerValue);
+  dataPtr->SaveConfiguration();
+  str_topic = String("f2p") + String(pot);
+  str = String(dataPtr->FlowerPotWateringTimer[pot - 1].GetTimerValue());
+  MQTTSerial.println("[" + str_topic + "]" + str);
+  /*if (MQTT_Client != NULL)
 	{
 		str_topic = String(MQTT_PublishTopic) + String("/f2p") + String(pot);
         str = String(dataPtr->FlowerPotWateringTimer[pot - 1].GetTimerValue());
 		MQTT_Client->publish(str_topic.c_str(), str.c_str());
 	}*/
+  return CommandStatus;
 }
 //-----------------------------------------------------------------------------
 
@@ -636,13 +641,13 @@ int spt_application::SetSoilSensorTimer_Command()
   TimerValue = JsonCmd["v"];
   if (TimerValue == 0) return (CommandStatus = CommandFunction_CommandKO);
   dataPtr->SoilSensorTimerValue = TimerValue;
-    dataPtr->SoilSensorTimer.SetTimerValue(TimerValue);
-    dataPtr->SaveConfiguration();
+  dataPtr->SoilSensorTimer.SetTimerValue(TimerValue);
+  dataPtr->SaveConfiguration();
 
 
-    str_topic = String("f10");
-    str = String(dataPtr->SoilSensorTimer.GetTimerValue());
-    MQTTSerial.println("[" + str_topic + "]" + str);
+  str_topic = String("f10");
+  str = String(dataPtr->SoilSensorTimer.GetTimerValue());
+  MQTTSerial.println("[" + str_topic + "]" + str);
 
   /*if (MQTT_Client != NULL)
   {
@@ -650,6 +655,7 @@ int spt_application::SetSoilSensorTimer_Command()
     str = String(dataPtr->SoilSensorTimer.GetTimerValue());
     MQTT_Client->publish(str_topic.c_str(), str.c_str());
   }*/
+  return CommandStatus;
 }
 //-----------------------------------------------------------------------------
 
@@ -957,10 +963,12 @@ Serial.println("spt_application::StartWateringCycle()");
     //MQTTSerial.println("[f1]on");
     str_topic = String("PS") + String(2000);
     str_payload = "on";
-    Serial2.print("[" + str_topic + "]" + str_payload);
+    MQTTSerial.print("[" + str_topic + "]" + str_payload);
 
-    Serial2.println("[f1]on");
-    //Serial2.println("[PS2000]on");
+    str_topic = String("f1");
+    str_payload = "on";
+    MQTTSerial.println("[" + str_topic + "]" + str_payload);
+    //MQTTSerial.println("[PS2000]on");
     Step=0;
   return true;
 }
@@ -974,7 +982,7 @@ boolean spt_application::StopWateringCycle()
 #ifdef _SERIAL_VERSION_
 Serial.println("spt_application::StopWateringCycle()");
 #endif
-  int i;
+  //int i;
   // check if Program State is coherent
     if (State!=ProgramState_WateringCycle) return false;
   // Change Program State
@@ -983,10 +991,13 @@ Serial.println("spt_application::StopWateringCycle()");
     if (Step>=1 && Step<=5) dataPtr->SolenoidValve_PowerSupply[Step-1].Off();
     //MQTTSerial.println("[f1]off");
     //MQTTSerial.println("[PS2000]off");
-    Serial2.println("[f1]off");
+    str_topic = String("f1");
+    str_payload = "off";
+    MQTTSerial.println("[" + str_topic + "]" + str_payload);
+
     str_topic = String("PS") + String(2000);
     str_payload = "off";
-    Serial2.print("[" + str_topic + "]" + str_payload);
+    MQTTSerial.print("[" + str_topic + "]" + str_payload);
     SetState(ProgramState_WaitingForCommand);
   return true;
 }
@@ -1096,10 +1107,14 @@ Serial.println("IncrementStep=true");
       // Change Program State
       //MQTTSerial.println("[f1]off");
       //MQTTSerial.println("[PS2000]off");
-      Serial2.println("[f1]off");
-    str_topic = String("PS") + String(2000);
-    str_payload = "off";
-    Serial2.print("[" + str_topic + "]" + str_payload);
+      //MQTTSerial.println("[f1]off");
+      str_topic = String("f1");
+      str_payload = "off";
+      MQTTSerial.println("[" + str_topic + "]" + str_payload);
+
+      str_topic = String("PS") + String(2000);
+      str_payload = "off";
+      MQTTSerial.print("[" + str_topic + "]" + str_payload);
       SetState(ProgramState_WaitingForCommand);
     }
   }
@@ -1142,7 +1157,7 @@ Serial.println(dataPtr->FlowerPotWateringTimer[pot-1].GetTimerValue());
     dataPtr->SolenoidValve_PowerSupply[pot-1].On();
 
     str_topic = String("f4p") + String(pot);
-    Serial2.println("[" + str_topic + "]on");
+    MQTTSerial.println("[" + str_topic + "]on");
 
     /*if (MQTT_Client != NULL)
     {
@@ -1152,7 +1167,7 @@ Serial.println(dataPtr->FlowerPotWateringTimer[pot-1].GetTimerValue());
   // power on pump
     dataPtr->Pump_PowerSupply.On();
     str_topic = String("f7");
-    Serial2.println("[" + str_topic + "]on");
+    MQTTSerial.println("[" + str_topic + "]on");
     /*if (MQTT_Client != NULL)
     {
       str_topic=String(MQTT_PublishTopic)+String("/f7");
@@ -1225,7 +1240,7 @@ void spt_application::OtherSensorMeasurement()
 Serial.println(F("spt_application::OtherSensorMeasurement()"));
 #endif
   float temperature, relative_humidity;
-  float Light;
+  //float Light;
   int i;
   digitalWrite(BusyLedPin, HIGH);
 

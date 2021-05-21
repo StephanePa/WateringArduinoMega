@@ -132,7 +132,7 @@ void CSensor::MQTTPublishData()
 {
   str_payload=GetJSONString();
   str_topic = String("C") + String(Id);
-  Serial2.println("[" + str_topic + "]" + str_payload);
+  MQTTSerial.println("[" + str_topic + "]" + str_payload);
   /*str_topic=String(MQTT_PublishTopic)+String("/C")+String(Id);
   if (MQTT_Client!=NULL)
   {

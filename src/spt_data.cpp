@@ -102,12 +102,152 @@ File_DataConfig::File_DataConfig()
   SoilSensorTimerValue=120;
 }
 
-void File_DataConfig::_loadConfigFile(File& OrigFile)
+void File_DataConfig::_loadInternalConfigFile(File& OrigFile)
 {
   int i,j;
-  unsigned int val;
+  //unsigned int val;
   int line_counter;
-  char * pEnd;
+  //char * pEnd;
+  String str;
+
+#ifdef _SERIAL_VERSION_
+Serial.println("File_DataConfig::_loadInternalConfigFile()");
+#endif 
+
+  line_counter=0;
+
+  while(OrigFile.available() > 0 )
+  {
+    // Get a line
+    i = 0;
+    while((buffer[i++] = OrigFile.read()) != '\n') 
+    {
+      /* Si la ligne dépasse la taille du buffer */
+      if(i == 200) 
+      {
+         /* On finit de lire la ligne mais sans stocker les données */
+        while(OrigFile.read() != '\n');
+        break; // Et on arrête la lecture de cette ligne
+      }  
+    }
+    /* Finalise la chaine de caractéres ASCIIZ en supprimant le \n au passage */
+    buffer[--i] = '\0';
+ 
+    /* Incrémente le compteur de lignes */
+    ++line_counter;
+ 
+    /* Ignore les lignes vides ou les lignes de commentaires */
+    if(buffer[0] == '\0' || buffer[0] == '#') continue;  
+    buf=strstr(buffer,"="); buf++;
+    int n=strlen(buffer)-strlen(buf)-1;
+    strncpy(key,buffer,n);
+    key[n]='\0';
+    str=String(key);
+
+    // DHTSensor[0] - AirTemperatureRelativeHumidity Sensor Box
+    if (str == String(F("DHTSensor[0].Id"))) DHT_Sensors[0].Id=String(buf).toInt();
+    if (str == String(F("DHTSensor[0].Pin"))) DHT_Sensors[0].Pin=String(buf).toInt();
+    if (str == String(F("DHTSensor[0].Type")))
+    {
+      buf[strlen(buf)-1]=0x00;
+      DHT_Sensors[0] .Type=DHT22SensorType;
+      if (strcmp(buf,"DHT11SensorType")==0) DHT_Sensors[0].Type=DHT11SensorType;
+      if (strcmp(buf,"DHT22SensorType")==0) DHT_Sensors[0].Type=DHT22SensorType;
+    }
+
+    // DHTSensor[1] - AirTemperatureRelativeHumidity Sensor Greenhouse
+    if (str == String(F("DHTSensor[1].Id"))) DHT_Sensors[1].Id=String(buf).toInt();
+    if (str == String(F("DHTSensor[1].Pin"))) DHT_Sensors[1].Pin=String(buf).toInt();
+    if (str == String(F("DHTSensor[1].Type")))
+    {
+      buf[strlen(buf)-1]=0x00;
+      DHT_Sensors[1].Type=DHT22SensorType;
+      if (strcmp(buf,"DHT11SensorType")==0) DHT_Sensors[1].Type=DHT11SensorType;
+      if (strcmp(buf,"DHT22SensorType")==0) DHT_Sensors[1].Type=DHT22SensorType;
+    }
+
+    // DHTSensor[2] - AirTemperatureRelativeHumidity Sensor OutDoor
+    if (str == String(F("DHTSensor[2].Id"))) DHT_Sensors[2].Id=String(buf).toInt();
+    if (str == String(F("DHTSensor[2].Pin"))) DHT_Sensors[2].Pin=String(buf).toInt();
+    if (str == String(F("DHTSensor[2].Type")))
+    {
+      buf[strlen(buf)-1]=0x00;
+      DHT_Sensors[2].Type=DHT22SensorType;
+      if (strcmp(buf,"DHT11SensorType")==0) DHT_Sensors[2].Type=DHT11SensorType;
+      if (strcmp(buf,"DHT22SensorType")==0) DHT_Sensors[2].Type=DHT22SensorType;
+    }
+
+    // WaterPump1
+    if (str == String(F("WaterPump1.Id"))) WaterPump1_PowerSupply.Id=String(buf).toInt();
+    if (str == String(F("WaterPump1.Pin"))) WaterPump1_PowerSupply.Pin=String(buf).toInt();
+
+    // PS12V_PowerSupply
+    if (str == String(F("PS12V.Id"))) PS12V_PowerSupply.Id=String(buf).toInt();
+    if (str == String(F("PS12V.Pin"))) PS12V_PowerSupply.Pin=String(buf).toInt();
+
+    // Sensor_PowerSupply
+    if (str == String(F("PSSensor.Id"))) Sensor_PowerSupply.Id=String(buf).toInt();
+    if (str == String(F("PSSensor.Pin"))) Sensor_PowerSupply.Pin=String(buf).toInt();
+
+    // SolenoidValve_PowerSupply
+    if (str == String(F("PSSolenoidValve[0].Id"))) SolenoidValve[0].Id=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[0].Pin"))) SolenoidValve[0].Pin=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[1].Id"))) SolenoidValve[1].Id=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[1].Pin"))) SolenoidValve[1].Pin=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[2].Id"))) SolenoidValve[2].Id=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[2].Pin"))) SolenoidValve[2].Pin=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[3].Id"))) SolenoidValve[3].Id=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[3].Pin"))) SolenoidValve[3].Pin=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[4].Id"))) SolenoidValve[4].Id=String(buf).toInt();
+    if (str == String(F("PSSolenoidValve[4].Pin"))) SolenoidValve[4].Pin=String(buf).toInt();
+
+    // Push Buttons
+    if (str == String(F("PBWateringCycle.Pin"))) WateringCyclePushButton.Pin=String(buf).toInt();
+    if (str == String(F("PBManualPump.Pin"))) ManualPumpPushButton.Pin=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[0].Pin"))) WateringFlowerPotPushButton[0].Pin=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[1].Pin"))) WateringFlowerPotPushButton[1].Pin=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[2].Pin"))) WateringFlowerPotPushButton[2].Pin=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[3].Pin"))) WateringFlowerPotPushButton[3].Pin=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[4].Pin"))) WateringFlowerPotPushButton[4].Pin=String(buf).toInt();
+    
+    // TinyRTC Module (Time module)
+    if (str == String(F("RTC.SCL"))) TinyRTC.PinWire_SCL=String(buf).toInt();
+    if (str == String(F("RTC.SDA"))) TinyRTC.PinWire_SDA=String(buf).toInt();
+  
+    // Busy Led Status
+    if (str == String(F("LedStatus.Pin"))) BusyLed.Pin=String(buf).toInt();
+
+    // OneWire configuration
+    if (str == String(F("OneWire.Pin"))) One_Wire.Pin=String(buf).toInt();
+
+    // DS18S20 one wire sensor
+    // sensor 1
+    if (str == String(F("DS18S20_Sensors[0].Id"))) DS18S20[0].Id=String(buf).toInt();
+    if (str == String(F("DS18S20_Sensors[0].Addr"))) for (j=0;j<8;j++) DS18S20[0].Addr[j]=(convertCharToHex(buf[2*j])<<4) + convertCharToHex(buf[2*j+1]);
+    // sensor 2
+    if (str == String(F("DS18S20_Sensors[1].Id"))) DS18S20[1].Id=String(buf).toInt();
+    if (str == String(F("DS18S20_Sensors[1].Addr"))) for (j=0;j<8;j++) DS18S20[1].Addr[j]=(convertCharToHex(buf[2*j])<<4) + convertCharToHex(buf[2*j+1]);
+    // sensor 3
+    if (str == String(F("DS18S20_Sensors[2].Id"))) DS18S20[2].Id=String(buf).toInt();
+    if (str == String(F("DS18S20_Sensors[2].Addr"))) for (j=0;j<8;j++) DS18S20[2].Addr[j]=(convertCharToHex(buf[2*j])<<4) + convertCharToHex(buf[2*j+1]);
+    // sensor 4
+    if (str == String(F("DS18S20_Sensors[3].Id"))) DS18S20[3].Id=String(buf).toInt();
+    if (str == String(F("DS18S20_Sensors[3].Addr"))) for (j=0;j<8;j++) DS18S20[3].Addr[j]=(convertCharToHex(buf[2*j])<<4) + convertCharToHex(buf[2*j+1]);
+    // sensor 5
+    if (str == String(F("DS18S20_Sensors[4].Id"))) DS18S20[4].Id=String(buf).toInt();
+    if (str == String(F("DS18S20_Sensors[4].Addr"))) for (j=0;j<8;j++) DS18S20[4].Addr[j]=(convertCharToHex(buf[2*j])<<4) + convertCharToHex(buf[2*j+1]);
+  }
+#ifdef _SERIAL_VERSION_
+Serial.println("end of .................................. File_DataConfig::_loadInternalConfigFile()");
+#endif 
+};
+
+void File_DataConfig::_loadExternalConfigFile(File& OrigFile)
+{
+  int i,j;
+  //unsigned int val;
+  int line_counter;
+  //char * pEnd;
   String str;
 
 #ifdef _SERIAL_VERSION_
@@ -143,16 +283,96 @@ Serial.println("File_DataConfig::_loadConfigFile()");
     strncpy(key,buffer,n);
     key[n]='\0';
     str=String(key);
-/*
+
+    // DHTSensor[0] - AirTemperatureRelativeHumidity Sensor Box
+    if (str == String(F("DHTSensor[0].enabled"))) DHT_Sensors[0].enable=String(buf).toInt();
+
+    // DHTSensor[1] - AirTemperatureRelativeHumidity Sensor Greenhouse
+    if (str == String(F("DHTSensor[1].enabled"))) DHT_Sensors[1].enable=String(buf).toInt();
+
+    // DHTSensor[2] - AirTemperatureRelativeHumidity Sensor OutDoor
+    if (str == String(F("DHTSensor[2].enabled"))) DHT_Sensors[2].enable=String(buf).toInt();
+
+    // Push Buttons
+    if (str == String(F("PBWateringCycle.enable"))) WateringCyclePushButton.enable=String(buf).toInt();
+    if (str == String(F("PBManualPump.enable"))) ManualPumpPushButton.enable=String(buf).toInt();
+    if (str == String(F("PBManualPump.Timer"))) ManualPumpPushButton.timer=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[0].enable"))) WateringFlowerPotPushButton[0].enable=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[0].Timer"))) WateringFlowerPotPushButton[0].timer=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[1].enable"))) WateringFlowerPotPushButton[1].enable=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[1].Timer"))) WateringFlowerPotPushButton[1].timer=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[2].enable"))) WateringFlowerPotPushButton[2].enable=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[2].Timer"))) WateringFlowerPotPushButton[2].timer=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[3].enable"))) WateringFlowerPotPushButton[3].enable=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[3].Timer"))) WateringFlowerPotPushButton[3].timer=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[4].enable"))) WateringFlowerPotPushButton[4].enable=String(buf).toInt();
+    if (str == String(F("PBWateringFlowerPot[4].Timer"))) WateringFlowerPotPushButton[4].timer=String(buf).toInt();
+
+    // DS18S20 one wire sensor
+    // sensor 1
+    if (str == String(F("DS18S20_Sensors[0].enabled"))) DS18S20[0].enable=String(buf).toInt();
+    // sensor 2
+    if (str == String(F("DS18S20_Sensors[1].enabled"))) DS18S20[1].enable=String(buf).toInt();
+    // sensor 3
+    if (str == String(F("DS18S20_Sensors[2].enabled"))) DS18S20[2].enable=String(buf).toInt();
+    // sensor 4
+    if (str == String(F("DS18S20_Sensors[3].enabled"))) DS18S20[3].enable=String(buf).toInt();
+    // sensor 5
+    if (str == String(F("DS18S20_Sensors[4].enabled"))) DS18S20[4].enable=String(buf).toInt();
+
+    // SensorTimerValue
+    if (str == String(F("SensorTimerValue"))) SensorTimerValue=String(buf).toInt();
+
+    // SoilSensorTimerValue
+    if (str == String(F("SoilSensorTimerValue"))) SoilSensorTimerValue=String(buf).toInt();
+  }
 #ifdef _SERIAL_VERSION_
-Serial.print("File_DataConfig::_loadConfigFile -> ");
-Serial.println(buffer);
-Serial.print("  >buf=");
-Serial.println(key);
-Serial.print("  >val=");
-Serial.println(buf);
+Serial.println("end of .................................. File_DataConfig::_loadExternalConfigFile()");
 #endif 
-*/
+};
+
+void File_DataConfig::_loadConfigFile(File& OrigFile)
+{
+  int i,j;
+  //unsigned int val;
+  int line_counter;
+  //char * pEnd;
+  String str;
+
+#ifdef _SERIAL_VERSION_
+Serial.println("File_DataConfig::_loadConfigFile()");
+#endif 
+
+  line_counter=0;
+
+  while(OrigFile.available() > 0 )
+  {
+    // Get a line
+    i = 0;
+    while((buffer[i++] = OrigFile.read()) != '\n') 
+    {
+      /* Si la ligne dépasse la taille du buffer */
+      if(i == 200) 
+      {
+         /* On finit de lire la ligne mais sans stocker les données */
+        while(OrigFile.read() != '\n');
+        break; // Et on arrête la lecture de cette ligne
+      }  
+    }
+    /* Finalise la chaine de caractéres ASCIIZ en supprimant le \n au passage */
+    buffer[--i] = '\0';
+ 
+    /* Incrémente le compteur de lignes */
+    ++line_counter;
+ 
+    /* Ignore les lignes vides ou les lignes de commentaires */
+    if(buffer[0] == '\0' || buffer[0] == '#') continue;  
+    buf=strstr(buffer,"="); buf++;
+    int n=strlen(buffer)-strlen(buf)-1;
+    strncpy(key,buffer,n);
+    key[n]='\0';
+    str=String(key);
+
     // DHTSensor[0] - AirTemperatureRelativeHumidity Sensor Box
     if (str == String(F("DHTSensor[0].Id"))) DHT_Sensors[0].Id=String(buf).toInt();
     if (str == String(F("DHTSensor[0].Pin"))) DHT_Sensors[0].Pin=String(buf).toInt();
@@ -589,6 +809,284 @@ void File_DataConfig::_saveConfigFile(File& DestFile)
   DestFile.println(SoilSensorTimerValue);
 }
 
+void File_DataConfig::_saveInternalConfigFile(File& DestFile)
+{
+  int j;
+  String hex_str;
+
+  DestFile.println(F("#------------------------------"));
+  DestFile.println(F("# ARDUINO GREENHGOUSE v0.1"));
+  DestFile.println(F("# Internal Configuration file"));
+  DestFile.println(F("# unchanged parameters"));
+  DestFile.println(F("#------------------------------"));
+  
+  DestFile.println(F("#"));
+  DestFile.println(F("# AirTemperatureRelativeHumidity Sensor Box"));
+  DestFile.print(F("DHTSensor[0].Id="));
+  DestFile.println(DHT_Sensors[0].Id);
+  DestFile.print(F("DHTSensor[0].Pin="));
+  DestFile.println(DHT_Sensors[0].Pin);
+  DestFile.print(F("DHTSensor[0].Type="));
+  if (DHT_Sensors[0].Type==DHT11SensorType) DestFile.println("DHT11SensorType");
+  if (DHT_Sensors[0].Type==DHT22SensorType) DestFile.println("DHT22SensorType");
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# AirTemperatureRelativeHumidity Sensor Greenhouse"));
+  DestFile.print(F("DHTSensor[1].Id="));
+  DestFile.println(DHT_Sensors[1].Id);
+  DestFile.print(F("DHTSensor[1].Pin="));
+  DestFile.println(DHT_Sensors[1].Pin);
+  DestFile.print(F("DHTSensor[1].Type="));
+  if (DHT_Sensors[1].Type==DHT11SensorType) DestFile.println("DHT11SensorType");
+  if (DHT_Sensors[1].Type==DHT22SensorType) DestFile.println("DHT22SensorType");
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# AirTemperatureRelativeHumidity Sensor OutDoor"));
+  DestFile.print(F("DHTSensor[2].Id="));
+  DestFile.println(DHT_Sensors[2].Id);
+  DestFile.print(F("DHTSensor[2].Pin="));
+  DestFile.println(DHT_Sensors[2].Pin);
+  DestFile.print(F("DHTSensor[2].Type="));
+  if (DHT_Sensors[2].Type==DHT11SensorType) DestFile.println("DHT11SensorType");
+  if (DHT_Sensors[2].Type==DHT22SensorType) DestFile.println("DHT22SensorType");
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# Water Pump 1"));
+  DestFile.print(F("WaterPump1.Id="));
+  DestFile.println(WaterPump1_PowerSupply.Id);
+  DestFile.print(F("WaterPump1.Pin="));
+  DestFile.println(WaterPump1_PowerSupply.Pin);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# PS12V_PowerSupply"));
+  DestFile.print(F("PS12V.Id="));
+  DestFile.println(PS12V_PowerSupply.Id);
+  DestFile.print(F("PS12V.Pin="));
+  DestFile.println(PS12V_PowerSupply.Pin);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# PSSolenoidValve_PowerSupply"));
+  DestFile.print(F("PSSolenoidValve[0].Id="));
+  DestFile.println(SolenoidValve[0].Id);
+  DestFile.print(F("PSSolenoidValve[0].Pin="));
+  DestFile.println(SolenoidValve[0].Pin);
+  DestFile.print(F("PSSolenoidValve[1].Id="));
+  DestFile.println(SolenoidValve[1].Id);
+  DestFile.print(F("PSSolenoidValve[1].Pin="));
+  DestFile.println(SolenoidValve[1].Pin);
+  DestFile.print(F("PSSolenoidValve[2].Id="));
+  DestFile.println(SolenoidValve[2].Id);
+  DestFile.print(F("PSSolenoidValve[2].Pin="));
+  DestFile.println(SolenoidValve[2].Pin);
+  DestFile.print(F("PSSolenoidValve[3].Id="));
+  DestFile.println(SolenoidValve[3].Id);
+  DestFile.print(F("PSSolenoidValve[3].Pin="));
+  DestFile.println(SolenoidValve[3].Pin);
+  DestFile.print(F("PSSolenoidValve[4].Id="));
+  DestFile.println(SolenoidValve[4].Id);
+  DestFile.print(F("PSSolenoidValve[4].Pin="));
+  DestFile.println(SolenoidValve[4].Pin);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# Push Buttons"));
+  DestFile.print(F("PBWateringCycle.Pin="));
+  DestFile.println(WateringCyclePushButton.Pin);
+  DestFile.print(F("PBManualPump.Pin="));
+  DestFile.println(ManualPumpPushButton.Pin);
+  DestFile.print(F("PBWateringFlowerPot[0].Pin="));
+  DestFile.println(WateringFlowerPotPushButton[0].Pin);
+  DestFile.print(F("PBWateringFlowerPot[1].Pin="));
+  DestFile.println(WateringFlowerPotPushButton[1].Pin);
+  DestFile.print(F("PBWateringFlowerPot[2].Pin="));
+  DestFile.println(WateringFlowerPotPushButton[2].Pin);
+  DestFile.print(F("PBWateringFlowerPot[3].Pin="));
+  DestFile.println(WateringFlowerPotPushButton[3].Pin);
+  DestFile.print(F("PBWateringFlowerPot[4].Pin="));
+  DestFile.println(WateringFlowerPotPushButton[4].Pin);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# TinyRTC Time module"));
+  DestFile.print(F("RTC.SCL="));
+  DestFile.println(TinyRTC.PinWire_SCL);
+  DestFile.print(F("RTC.SDA="));
+  DestFile.println(TinyRTC.PinWire_SDA);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# Led Status"));
+  DestFile.print(F("LedStatus.Pin="));
+  DestFile.println(BusyLed.Pin);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# One Wire Pin (for DS18S20 sensors)"));
+  DestFile.print(F("OneWire.Pin="));
+  DestFile.println(One_Wire.Pin);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18S20 sensors"));
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 1)"));
+  DestFile.print(F("DS18S20_Sensors[0].Id="));
+  DestFile.println(DS18S20[0].Id);
+  DestFile.print(F("DS18S20_Sensors[0].Addr="));
+  hex_str="";
+  for (j=0;j<8;j++)
+  {
+    if(DS18S20[0].Addr[j] < 0x10) hex_str += '0';
+    hex_str += String(DS18S20[0].Addr[j], HEX);
+  }
+  DestFile.println(hex_str);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 2)"));
+  DestFile.print(F("DS18S20_Sensors[1].Id="));
+  DestFile.println(DS18S20[1].Id);
+  DestFile.print(F("DS18S20_Sensors[1].Addr="));
+  hex_str="";
+  for (j=0;j<8;j++)
+  {
+    if(DS18S20[1].Addr[j] < 0x10) hex_str += '0';
+    hex_str += String(DS18S20[1].Addr[j], HEX);
+  }
+  DestFile.println(hex_str);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 3)"));
+  DestFile.print(F("DS18S20_Sensors[2].Id="));
+  DestFile.println(DS18S20[2].Id);
+  DestFile.print(F("DS18S20_Sensors[2].Addr="));
+  hex_str="";
+  for (j=0;j<8;j++)
+  {
+    if(DS18S20[2].Addr[j] < 0x10) hex_str += '0';
+    hex_str += String(DS18S20[2].Addr[j], HEX);
+  }
+  DestFile.println(hex_str);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 4)"));
+  DestFile.print(F("DS18S20_Sensors[3].Id="));
+  DestFile.println(DS18S20[3].Id);
+  DestFile.print(F("DS18S20_Sensors[3].Addr="));
+  hex_str="";
+  for (j=0;j<8;j++)
+  {
+    if(DS18S20[3].Addr[j] < 0x10) hex_str += '0';
+    hex_str += String(DS18S20[3].Addr[j], HEX);
+  }
+  DestFile.println(hex_str);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 5)"));
+  DestFile.print(F("DS18S20_Sensors[4].Id="));
+  DestFile.println(DS18S20[4].Id);
+  DestFile.print(F("DS18S20_Sensors[4].Addr="));
+  hex_str="";
+  for (j=0;j<8;j++)
+  {
+    if(DS18S20[4].Addr[j] < 0x10) hex_str += '0';
+    hex_str += String(DS18S20[4].Addr[j], HEX);
+  }
+  DestFile.println(hex_str);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("#------------------------------"));
+}
+
+void File_DataConfig::_saveExternalConfigFile(File& DestFile)
+{
+  int j;
+  String hex_str;
+
+  DestFile.println(F("#------------------------------"));
+  DestFile.println(F("# ARDUINO GREENHGOUSE v0.1"));
+  DestFile.println(F("# External Configuration file"));
+  DestFile.println(F("# updatable parameters"));
+  DestFile.println(F("#------------------------------"));
+  
+  DestFile.println(F("#"));
+  DestFile.println(F("# AirTemperatureRelativeHumidity Sensor Box"));
+  DestFile.print(F("DHTSensor[0].enabled="));
+  DestFile.println(DHT_Sensors[0].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# AirTemperatureRelativeHumidity Sensor Greenhouse"));
+  DestFile.print(F("DHTSensor[1].enabled="));
+  DestFile.println(DHT_Sensors[1].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# AirTemperatureRelativeHumidity Sensor OutDoor"));
+  DestFile.print(F("DHTSensor[2].enabled="));
+  DestFile.println(DHT_Sensors[2].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# Push Buttons"));
+  DestFile.print(F("PBWateringCycle.enable="));
+  DestFile.println(WateringCyclePushButton.enable);
+  DestFile.print(F("PBManualPump.enable="));
+  DestFile.println(ManualPumpPushButton.enable);
+  DestFile.print(F("PBManualPump.Timer="));
+  DestFile.println(ManualPumpPushButton.timer);
+  DestFile.print(F("PBWateringFlowerPot[0].enable="));
+  DestFile.println(WateringFlowerPotPushButton[0].enable);
+  DestFile.print(F("PBWateringFlowerPot[0].Timer="));
+  DestFile.println(WateringFlowerPotPushButton[0].timer);
+  DestFile.print(F("PBWateringFlowerPot[1].enable="));
+  DestFile.println(WateringFlowerPotPushButton[1].enable);
+  DestFile.print(F("PBWateringFlowerPot[1].Timer="));
+  DestFile.println(WateringFlowerPotPushButton[1].timer);
+  DestFile.print(F("PBWateringFlowerPot[2].enable="));
+  DestFile.println(WateringFlowerPotPushButton[2].enable);
+  DestFile.print(F("PBWateringFlowerPot[2].Timer="));
+  DestFile.println(WateringFlowerPotPushButton[2].timer);
+  DestFile.print(F("PBWateringFlowerPot[3].enable="));
+  DestFile.println(WateringFlowerPotPushButton[3].enable);
+  DestFile.print(F("PBWateringFlowerPot[3].Timer="));
+  DestFile.println(WateringFlowerPotPushButton[3].timer);
+  DestFile.print(F("PBWateringFlowerPot[4].enable="));
+  DestFile.println(WateringFlowerPotPushButton[4].enable);
+  DestFile.print(F("PBWateringFlowerPot[4].Timer="));
+  DestFile.println(WateringFlowerPotPushButton[4].timer);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18S20 sensors"));
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 1)"));
+  DestFile.print(F("DS18S20_Sensors[0].enabled="));
+  DestFile.println(DS18S20[0].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 2)"));
+  DestFile.print(F("DS18S20_Sensors[1].enabled="));
+  DestFile.println(DS18S20[1].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 3)"));
+  DestFile.print(F("DS18S20_Sensors[2].enabled="));
+  DestFile.println(DS18S20[2].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 4)"));
+  DestFile.print(F("DS18S20_Sensors[3].enabled="));
+  DestFile.println(DS18S20[3].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# DS18B20 Temperature sensor (soil measurement 5)"));
+  DestFile.print(F("DS18S20_Sensors[4].enabled="));
+  DestFile.println(DS18S20[4].enable);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# Sensor measurement timer in seconds"));
+  DestFile.print(F("SensorTimerValue="));
+  DestFile.println(SensorTimerValue);
+
+  DestFile.println(F("#"));
+  DestFile.println(F("# Soil Sensor measurement timer in seconds"));
+  DestFile.print(F("SoilSensorTimerValue="));
+  DestFile.println(SoilSensorTimerValue);
+}
+
 spt_data::spt_data()
 {
 #ifdef _SERIAL_VERSION_
@@ -612,6 +1110,16 @@ Serial.println("spt_data::Reset()");
   memset(ConfigBackupFilename,30,1);
   strcpy(ConfigFilename,"A1CONFIG.CFG");
   strcpy(ConfigBackupFilename,"A1CONFIG.BKG");
+
+  memset(InternalConfigFilename,30,1);
+  memset(InternalConfigBackupFilename,30,1);
+  strcpy(InternalConfigFilename,"A1InternalConfig.cfg");
+  strcpy(InternalConfigBackupFilename,"A1InternalConfig.bk");
+
+  memset(ExternalConfigFilename,30,1);
+  memset(ExternalConfigBackupFilename,30,1);
+  strcpy(ExternalConfigFilename,"A1ExternalConfig.cfg");
+  strcpy(ExternalConfigBackupFilename,"A1ExternalConfig.bk");
 }
 void spt_data::Init()
 {
@@ -748,14 +1256,14 @@ CSensor* spt_data::FindSensorById(int id)
   return sensor;
 }
 
-
 //-----------------------------------------------------------------------------
 void spt_data::LoadConfiguration()
 {
 #ifdef _SERIAL_VERSION_
 Serial.println("spt_data::LoadConfiguration()");
 #endif
-  _loadConfigFile();
+  _loadExternalConfigFile();
+  _loadInternalConfigFile();
 }
 //-----------------------------------------------------------------------------
 
@@ -765,9 +1273,89 @@ void spt_data::SaveConfiguration()
 #ifdef _SERIAL_VERSION_
 Serial.println("spt_data::SaveConfiguration()");
 #endif
-  if (SD.exists(ConfigFilename)) _copyConfigFile();
-  _saveConfigFile();
+  if (SD.exists(ConfigFilename)) _copyConfigFile(ExternalConfigFilename,ExternalConfigBackupFilename);
+  _saveExternalConfigFile();
 }  
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+void spt_data::_loadInternalConfigFile()
+{
+#ifdef _SERIAL_VERSION_
+Serial.println("spt_data::_loadInternalConfigFile()");
+#endif
+  File OrigFile;
+  if (!SD.exists(InternalConfigFilename)) _saveInternalConfigFile();
+  OrigFile=SD.open(InternalConfigFilename);
+#ifdef _SERIAL_VERSION_
+Serial.println(" > Config._loadConfigFile(OrigFile);");
+#endif
+  Config._loadInternalConfigFile(OrigFile);
+#ifdef _SERIAL_VERSION_
+Serial.println("  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+#endif  
+  OrigFile.close();
+#ifdef _SERIAL_VERSION_
+Serial.println(".............................. end of spt_data::_loadConfigFile()");
+#endif
+}
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+void spt_data::_saveInternalConfigFile()
+{
+#ifdef _SERIAL_VERSION_
+Serial.println("spt_data::_saveInternalConfigFile()");
+#endif
+  File DestFile;
+  if (SD.exists(InternalConfigFilename)) SD.remove(InternalConfigFilename);
+  DestFile=SD.open(InternalConfigFilename,FILE_WRITE);
+  Config._saveInternalConfigFile(DestFile);
+  DestFile.close();
+#ifdef _SERIAL_VERSION_
+Serial.println(".............................. end of spt_data::_saveInternalConfigFile()");
+#endif
+}
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+void spt_data::_loadExternalConfigFile()
+{
+#ifdef _SERIAL_VERSION_
+Serial.println("spt_data::_loadExternalConfigFile()");
+#endif
+  File OrigFile;
+  if (!SD.exists(ExternalConfigFilename)) _saveExternalConfigFile();
+  OrigFile=SD.open(ExternalConfigFilename);
+#ifdef _SERIAL_VERSION_
+Serial.println(" > Config._loadExternalConfigFile(OrigFile);");
+#endif
+  Config._loadExternalConfigFile(OrigFile);
+#ifdef _SERIAL_VERSION_
+Serial.println("  <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
+#endif  
+  OrigFile.close();
+#ifdef _SERIAL_VERSION_
+Serial.println(".............................. end of spt_data::_loadExternalConfigFile()");
+#endif
+}
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+void spt_data::_saveExternalConfigFile()
+{
+#ifdef _SERIAL_VERSION_
+Serial.println("spt_data::_saveExternalConfigFile()");
+#endif
+  File DestFile;
+  if (SD.exists(ExternalConfigFilename)) SD.remove(ExternalConfigFilename);
+  DestFile=SD.open(ExternalConfigFilename,FILE_WRITE);
+  Config._saveExternalConfigFile(DestFile);
+  DestFile.close();
+#ifdef _SERIAL_VERSION_
+Serial.println(".............................. end of spt_data::_saveExternalConfigFile()");
+#endif
+}
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
@@ -821,7 +1409,7 @@ Serial.println(".............................. end of spt_data::_saveConfigFile(
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
-void spt_data::_copyConfigFile()
+void spt_data::_copyConfigFile(char *sourceFile,char *destinationFile)
 {
 #ifdef _SERIAL_VERSION_
 Serial.println("spt_data::_copyConfigFile()");
@@ -830,10 +1418,10 @@ Serial.println("spt_data::_copyConfigFile()");
   File DestFile;
   char strbuf[512];
   int i;
-  if (SD.exists(ConfigBackupFilename)) SD.remove(ConfigBackupFilename);
+  if (SD.exists(destinationFile)) SD.remove(destinationFile);
   
-  OrigFile=SD.open(ConfigFilename);
-  DestFile=SD.open(ConfigBackupFilename,FILE_WRITE);
+  OrigFile=SD.open(destinationFile);
+  DestFile=SD.open(destinationFile,FILE_WRITE);
   
   while ((i=OrigFile.available()))
   {

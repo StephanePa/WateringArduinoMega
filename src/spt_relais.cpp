@@ -92,7 +92,7 @@ void CPowerSupply::SendDataToNetwork()
   // send to TCP clients
   str_topic = String("PS") + String(Id);
   if (State == PowerOn) str_payload = "on"; else str_payload = "off";
-  Serial2.print("[" + str_topic + "]" + str_payload);
+  MQTTSerial.print("[" + str_topic + "]" + str_payload);
     /*
   if (MQTT_Client != NULL)
   {
